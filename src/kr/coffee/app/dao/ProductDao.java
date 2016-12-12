@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import kr.coffee.app.dto.Product;
 import kr.coffee.app.jdbc.DBCon;
 import kr.coffee.app.jdbc.JdbcUtil;
 
@@ -19,16 +20,16 @@ public class ProductDao {
 		return instance;
 	}
 
-	public String selectProductNameByPcode(String code){
+	public Product selectProductNameByPcode(String code){
 		Connection con = DBCon.getConnection();
-		String sql = "select name from product where code=?";
-		String result = null;
+		String sql = "select code, name from product where code=?";
+		Product product = null;
 		try {
 			pstmt = con.prepareStatement(sql);
 			pstmt.setString(1, code);
 			rs = pstmt.executeQuery();
 			if (rs.next()){
-				result = rs.getString(1);
+				product = new Product(rs.getString("code"), rs.getString("name"));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -36,6 +37,6 @@ public class ProductDao {
 			JdbcUtil.close(rs);
 			JdbcUtil.close(pstmt);
 		}
-		return result;
+		return product;
 	}
 }

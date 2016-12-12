@@ -19,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import kr.coffee.app.common.InputComp;
 import kr.coffee.app.dao.ProductDao;
 import kr.coffee.app.dao.SaleDao;
+import kr.coffee.app.dto.Product;
 import kr.coffee.app.dto.Sale;
 import kr.coffee.app.jdbc.DBCon;
 
@@ -122,14 +123,14 @@ public class CoffeeApp extends JFrame implements ActionListener {
 	FocusAdapter adapter = new FocusAdapter() {
 		@Override
 		public void focusGained(FocusEvent e) {
-			String name = ProductDao.getInstance().selectProductNameByPcode(pCode.getTfValueText());
-			if (name==null){
+			Product product = ProductDao.getInstance().selectProductNameByPcode(pCode.getTfValueText());
+			if (product==null){
 				JOptionPane.showMessageDialog(null, "해당 제품이 존재하지 않습니다.");
 				pCode.setTfVaueText("");
 				pCode.getTfValue().requestFocus();
 				return;
 			}
-			pName.setTfVaueText(name);
+			pName.setTfVaueText(product.getName());
 			pCode.setTfVaueText(pCode.getTfValueText().toUpperCase());
 			pCode.getTfValue().setEnabled(false);
 			pName.getTfValue().setEnabled(false);
@@ -140,24 +141,24 @@ public class CoffeeApp extends JFrame implements ActionListener {
 	
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == btnOutput2) {
-			showTableList("마 진 액 순 위", RankOutPut.MARGIN_RANK);
+			showTableList("마 진 액 순 위", true);
 		} else if (e.getSource() == btnOutput1) {
-			showTableList("판 매 금 액 순 위", RankOutPut.SALE_RANK);
+			showTableList("판 매 금 액 순 위", false);
 		} else if (e.getSource() == btnInput) {
 			actionPerformedBtnInput(e);
 		}
 	}
 	
-	private void showTableList(String title, int state) {
-		if (state==RankOutPut.SALE_RANK){
+	private void showTableList(String title, boolean isSalePrice) {
+		if (isSalePrice){
 			if (output1==null) {
-				output1 = new RankOutPut(state);
+				output1 = new RankOutPut(isSalePrice);
 				output1.setTitle(title);
 			}
 			refreshListFrame(output1);
 		}else{
 			if (output2 == null){
-				output2 = new RankOutPut(state);
+				output2 = new RankOutPut(isSalePrice);
 				output2.setTitle(title);
 			}
 			refreshListFrame(output2);
@@ -165,7 +166,7 @@ public class CoffeeApp extends JFrame implements ActionListener {
 	}
 	
 	private void refreshListFrame(RankOutPut output) {
-		output.setTableList();
+		output.reload();
 		output.setVisible(true);		
 	}
 	
@@ -179,20 +180,22 @@ public class CoffeeApp extends JFrame implements ActionListener {
 			}
 			clearField(true);
 			if (output1 != null){
-				output1.setTableList();
+				output1.reload();
 			}
 			if (output2 != null){
-				output2.setTableList();
+				output2.reload();
 			}
 		}
 	}
 
 	private Sale getItem() {
 		String code = pCode.getTfValueText().trim();
+		String name = pName.getTfValueText().trim();
+		
 		int price = Integer.valueOf(pPrice.getTfValueText().trim());
 		int saleCnt = Integer.valueOf(pCnt.getTfValueText().trim());
 		int marginRate = Integer.valueOf(pMargin.getTfValueText().trim());
-		return new Sale(code, price, saleCnt, marginRate);
+		return new Sale(new Product(code, name), price, saleCnt, marginRate);
 	}
 
 	private boolean validCheck() {

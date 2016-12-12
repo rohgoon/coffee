@@ -2,7 +2,7 @@ package kr.coffee.app;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,24 +15,22 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-import kr.coffee.app.dao.SaleInfoDao;
-import kr.coffee.app.dto.SaleInfo;
+import kr.coffee.app.dao.SaleDao;
+import kr.coffee.app.dto.Sale;
 
 @SuppressWarnings("serial")
 public class RankOutPut extends JFrame {
 
 	private JPanel contentPane;
 	private JLabel lblTitle;
-	private ArrayList<SaleInfo> rowDatas;
-	private int state;
 	private JTable table;
 	
 	private static final String[] COL_NAMES = {"순위", "제품코드", "제품명", "제품단가", "판매수량", "공급가액", "부가세액", "판매금액", "마진율", "마진액"};
-	public static final int SALE_RANK = 0;
-	public static final int MARGIN_RANK = 1;
+	public boolean isSalePrice;
 	
-	public RankOutPut(int state) {
-		this.state = state;
+	public RankOutPut(boolean isSalePrice) {
+		this.isSalePrice = isSalePrice;
+		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 800, 300);
 		contentPane = new JPanel();
@@ -57,30 +55,23 @@ public class RankOutPut extends JFrame {
 		lblTitle.setText(title);
 	}
 	
-	public void setTableList() {
-		if (state == SALE_RANK){
-			rowDatas = SaleInfoDao.getInstance().selectAllbyOrderBySalePrice();
-		}else{
-			rowDatas = SaleInfoDao.getInstance().selectAllbyOrderByMarginPrice();
+	public String[][] getRowDatas() {
+		List<Sale> rowDatas = SaleDao.getInstance().selectSaleDetailOrderBySalePrice(isSalePrice);
+		String[][] arRowDatas = new String[rowDatas.size()+1][];
+		for(int i=0; i<rowDatas.size(); i++){
+			arRowDatas[i]=rowDatas.get(i).toArray();
 		}
-		rowDatas.add(SaleInfoDao.getInstance().selectTotal());
-		setModel();
+		arRowDatas[rowDatas.size()]=SaleDao.getInstance().getTotal();
+		return arRowDatas;
 	}
 	
-	private void setModel() {
-		DefaultTableModel model= new DefaultTableModel(toStrArr(rowDatas), COL_NAMES);
+	public void reload() {
+		DefaultTableModel model= new DefaultTableModel(getRowDatas(), COL_NAMES);
 		table.setModel(model);
 		tableCellAlignment(SwingConstants.CENTER, 0,1,2);
 		tableCellAlignment(SwingConstants.RIGHT, 3,4,5,6,7,8,9);			
 	}
 	
-	private String[][] toStrArr(ArrayList<SaleInfo> rowDatas) {
-		String[][] arRows = new String[rowDatas.size()][9];
-		for(int i=0; i<rowDatas.size(); i++){
-			arRows[i] = rowDatas.get(i).toArray();
-		}
-		return arRows;
-	}
 	
 	public void tableCellAlignment(int align, int... idx) {
 		DefaultTableCellRenderer dtcr = new DefaultTableCellRenderer();
